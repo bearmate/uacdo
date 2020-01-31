@@ -155,7 +155,7 @@ VOID ReplaceConsole(DWORD processId) {
 INT ExecuteArguments(DWORD argc, TCHAR* argv[]) {
   PROCESS_INFORMATION pi;
   STARTUPINFO si;
-  DWORD i, parentProcessId;
+  DWORD i, parentProcessId, exitCode;
   size_t argumentsLength;
   TCHAR* arguments;
 
@@ -210,10 +210,13 @@ INT ExecuteArguments(DWORD argc, TCHAR* argv[]) {
   if (WaitForSingleObject(pi.hProcess, INFINITE) != WAIT_OBJECT_0)
     ExitWithLastError();
 
+  if (!GetExitCodeProcess(pi.hProcess, &exitCode))
+    ExitWithLastError();
+
   CloseHandle(pi.hThread);
   CloseHandle(pi.hProcess);
 
-  return EXIT_SUCCESS;
+  return exitCode;
 }
 
 //------ main ------
