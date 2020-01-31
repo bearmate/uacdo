@@ -23,16 +23,15 @@ VOID __declspec(noreturn) ExitWithMessage(DWORD exitCode, LPTSTR message) {
 VOID __declspec(noreturn) ExitWithError(DWORD error) {
   LPTSTR errorText = NULL;
 
-  FormatMessage(
-    FORMAT_MESSAGE_FROM_SYSTEM |
-    FORMAT_MESSAGE_ALLOCATE_BUFFER |
-    FORMAT_MESSAGE_IGNORE_INSERTS,
-    NULL,
-    error,
-    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-    (LPTSTR)&errorText,
-    0,
-    NULL);
+  FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM |
+                FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                FORMAT_MESSAGE_IGNORE_INSERTS,
+                NULL,
+                error,
+                MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                (LPTSTR)&errorText,
+                0,
+                NULL);
 
   ExitWithMessage(error, errorText);
 }
