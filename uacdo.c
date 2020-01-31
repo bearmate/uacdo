@@ -157,7 +157,7 @@ INT ExecuteArguments(DWORD argc, TCHAR* argv[]) {
   STARTUPINFO si;
   DWORD i, parentProcessId, exitCode;
   size_t argumentsLength;
-  TCHAR* arguments;
+  TCHAR* cmdline;
 
   if (argc < 2)
     ExitWithMessage(EXIT_FAILURE, _T("Missing arguments"));
@@ -167,17 +167,17 @@ INT ExecuteArguments(DWORD argc, TCHAR* argv[]) {
     ReplaceConsole(parentProcessId);
 
   argumentsLength = 0;
-  for (i = parentProcessId != 0 ? 3 : 2; i < argc; ++i)
+  for (i = parentProcessId != 0 ? 2 : 1; i < argc; ++i)
     argumentsLength += _tcslen(argv[i]) + 1;
 
-  arguments = (TCHAR*)malloc((argumentsLength + 1) * sizeof(TCHAR));
-  if (arguments == NULL)
+  cmdline = (TCHAR*)malloc((argumentsLength + 1) * sizeof(TCHAR));
+  if (cmdline == NULL)
     ExitWithMessage(EXIT_FAILURE, _T("Out of memory"));
-  ZeroMemory(arguments, (argumentsLength + 1) * sizeof(TCHAR));
+  ZeroMemory(cmdline, (argumentsLength + 1) * sizeof(TCHAR));
 
-  for (i = parentProcessId != 0 ? 3 : 2; i < argc; ++i) {
-    _tcscat(arguments, _T(" "));
-    _tcscat(arguments, argv[i]);
+  for (i = parentProcessId != 0 ? 2 : 1; i < argc; ++i) {
+    _tcscat(cmdline, argv[i]);
+    _tcscat(cmdline, _T(" "));
   }
 
   ZeroMemory(&pi, sizeof(pi));
@@ -193,8 +193,8 @@ INT ExecuteArguments(DWORD argc, TCHAR* argv[]) {
   si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
   si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
 
-  if (!CreateProcess(parentProcessId != 0 ? argv[2] : argv[1],
-                     arguments,
+  if (!CreateProcess(NULL,
+                     cmdline,
                      NULL,
                      NULL,
                      TRUE,
@@ -205,7 +205,7 @@ INT ExecuteArguments(DWORD argc, TCHAR* argv[]) {
                      &pi))
     ExitWithLastError();
 
-  free(arguments);
+  free(cmdline);
 
   if (WaitForSingleObject(pi.hProcess, INFINITE) != WAIT_OBJECT_0)
     ExitWithLastError();
