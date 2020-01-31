@@ -11,7 +11,7 @@
 // error message
 //
 VOID __declspec(noreturn) ExitWithMessage(DWORD exitCode, LPTSTR message) {
-  printf(message);
+  WriteFile(GetStdHandle(STD_ERROR_HANDLE), message, (DWORD)_tcslen(message), NULL, NULL);
   ExitProcess(exitCode);
 }
 
@@ -20,8 +20,9 @@ VOID __declspec(noreturn) ExitWithMessage(DWORD exitCode, LPTSTR message) {
 // Exit the process with the specified error code as exit code and an
 // corresponding error message
 //
-VOID __declspec(noreturn) ExitWithError(DWORD error) {
+VOID __declspec(noreturn) ExitWithError(DWORD error, LPTSTR message) {
   LPTSTR errorText = NULL;
+  TCHAR completeMessage[1024];
 
   FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM |
                 FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -33,7 +34,15 @@ VOID __declspec(noreturn) ExitWithError(DWORD error) {
                 0,
                 NULL);
 
-  ExitWithMessage(error, errorText);
+  ZeroMemory(completeMessage, 1024 * sizeof(TCHAR));
+  _sntprintf(completeMessage,
+             1023,
+             _T("ERROR 0x%08x at %s: %s"),
+             error,
+             message,
+             errorText);
+
+  ExitWithMessage(error, completeMessage);
 }
 
 //------ ExitWithLastError ------
@@ -41,9 +50,9 @@ VOID __declspec(noreturn) ExitWithError(DWORD error) {
 // Exits the process with the last Windows error as exit code and an
 // corresponding error message
 //
-VOID __declspec(noreturn) ExitWithLastError() {
+VOID __declspec(noreturn) ExitWithLastError(LPTSTR message) {
   DWORD error = GetLastError();
-  ExitWithError(error);
+  ExitWithError(error, message);
 }
 
 //------ IsUserAdmin ------
@@ -61,11 +70,11 @@ BOOL IsUserAdmin() {
                                 DOMAIN_ALIAS_RID_ADMINS,
                                 0, 0, 0, 0, 0, 0,
                                 &adminGroup))
-    ExitWithLastError();
+    ExitWithLastError(_T("AllocateAndInitializeSid"));
 
 
   if (!CheckTokenMembership(NULL, adminGroup, &result))
-    ExitWithLastError();
+    ExitWithLastError(_T("CheckTokenMembership"));
 
   return result;
 }
@@ -112,15 +121,15 @@ INT RestartElevated(DWORD argc, TCHAR* argv[]) {
   sei.nShow = SW_NORMAL;
 
   if (!ShellExecuteEx(&sei))
-    ExitWithLastError();
+    ExitWithLastError(_T("ShellExecuteEx"));
 
   free(arguments);
 
   if (WaitForSingleObject(sei.hProcess, INFINITE) != WAIT_OBJECT_0)
-    ExitWithLastError();
+    ExitWithLastError(_T("WaitForSingleObject"));
 
   if (!GetExitCodeProcess(sei.hProcess, &exitCode))
-    ExitWithLastError();
+    ExitWithLastError(_T("GetExitCodeProcess"));
 
   return exitCode;
 }
@@ -133,11 +142,11 @@ INT RestartElevated(DWORD argc, TCHAR* argv[]) {
 VOID ReplaceConsole(DWORD processId) {
   if (GetConsoleWindow() != NULL) {
     if (!FreeConsole())
-      ExitWithLastError();
+      ExitWithLastError(_T("FreeConsole"));
   }
 
   if (AttachConsole(processId) != TRUE)
-    ExitWithLastError();
+    ExitWithLastError(_T("AttachConsole"));
 }
 
 //------ ExecuteArguments ------
@@ -203,15 +212,15 @@ INT ExecuteArguments(DWORD argc, TCHAR* argv[]) {
                      NULL,
                      &si,
                      &pi))
-    ExitWithLastError();
+    ExitWithLastError(_T("CreateProcess"));
 
   free(cmdline);
 
   if (WaitForSingleObject(pi.hProcess, INFINITE) != WAIT_OBJECT_0)
-    ExitWithLastError();
+    ExitWithLastError(_T("WaitForSingleObject"));
 
   if (!GetExitCodeProcess(pi.hProcess, &exitCode))
-    ExitWithLastError();
+    ExitWithLastError(_T("GetExitCodeProcess"));
 
   CloseHandle(pi.hThread);
   CloseHandle(pi.hProcess);
