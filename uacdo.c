@@ -49,7 +49,7 @@ VOID __declspec(noreturn) ExitWithLastError() {
 
 //------ IsUserAdmin ------
 //
-// Checks if the process user has administrator priviliges
+// Checks if the process user has administrator privileges
 //
 BOOL IsUserAdmin() {
   BOOL result;
@@ -221,7 +221,7 @@ INT ExecuteArguments(DWORD argc, TCHAR* argv[]) {
 //
 // If the process user is already elevated, the arguments will exeucted in a
 // child process, otherwise the program will restart itself with administrator
-// priviliges.
+// privileges.
 //
 INT _tmain(INT argc, TCHAR* argv[]) {
   if (IsUserAdmin())
