@@ -118,7 +118,7 @@ INT RestartElevated(DWORD argc, TCHAR* argv[]) {
   sei.lpFile = argv[0];
   sei.lpParameters = arguments;
   sei.lpDirectory = NULL;
-  sei.nShow = SW_NORMAL;
+  sei.nShow = SW_HIDE;
 
   if (!ShellExecuteEx(&sei))
     ExitWithLastError(_T("ShellExecuteEx"));
